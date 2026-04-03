@@ -44,29 +44,47 @@ jobs:
       - name: Create OpenBench test
         id: test
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST https://bench.likeawizard.dev/scripts/ \
+          RESPONSE=$(curl -s -D /tmp/headers -X POST https://bench.likeawizard.dev/scripts/ \
             -d "username=${{ secrets.OPENBENCH_ADMIN_USER }}" \
             -d "password=${{ secrets.OPENBENCH_ADMIN_PASS }}" \
             -d "action=CREATE_TEST" \
-            -d "engine=Tofiks" \
+            -d "dev_engine=Tofiks" \
             -d "dev_repo=https://github.com/likeawizard/tofiks" \
             -d "dev_branch=${{ github.event.client_payload.pr_branch }}" \
             -d "dev_bench=${{ steps.dev.outputs.bench }}" \
+            -d "dev_options=Threads=1 Hash=8" \
+            -d "dev_time_control=10.0+0.1" \
+            -d "dev_network=" \
+            -d "base_engine=Tofiks" \
             -d "base_repo=https://github.com/likeawizard/tofiks" \
             -d "base_branch=master" \
             -d "base_bench=${{ steps.base.outputs.bench }}" \
-            -d "both_options=Threads=1 Hash=8" \
-            -d "both_time_control=10.0+0.1" \
+            -d "base_options=Threads=1 Hash=8" \
+            -d "base_time_control=10.0+0.1" \
+            -d "base_network=" \
             -d "book_name=UHO_Lichess_4852_v1.epd" \
+            -d "test_mode=SPRT" \
             -d "test_bounds=[0.00, 3.00]" \
             -d "test_confidence=[0.05, 0.05]" \
+            -d "test_max_games=20000" \
             -d "workload_size=32" \
             -d "priority=0" \
             -d "throughput=100" \
             -d "upload_pgns=FALSE" \
+            -d "syzygy_wdl=DISABLED" \
+            -d "syzygy_adj=OPTIONAL" \
             -d "win_adj=movecount=3 score=400" \
-            -d "draw_adj=movenumber=40 movecount=8 score=10")
-          echo "Response: $RESPONSE"
+            -d "draw_adj=movenumber=40 movecount=8 score=10" \
+            -d "scale_method=DEV" \
+            -d "scale_nps=1000000")
+          LOCATION=$(grep -i "^location:" /tmp/headers | tr -d '\r' | awk '{print $2}')
+          echo "Redirect: $LOCATION"
+          if echo "$LOCATION" | grep -q "/index/"; then
+            echo "Test created successfully"
+          else
+            echo "::error::OpenBench test creation failed. Redirected to: $LOCATION"
+            exit 1
+          fi
 
       - name: Comment on PR
         uses: peter-evans/create-or-update-comment@v4
