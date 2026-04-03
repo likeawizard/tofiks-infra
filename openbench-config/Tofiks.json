@@ -1,0 +1,36 @@
+{
+    "private" : false,
+    "nps"     : 1000000,
+    "source"  : "https://github.com/likeawizard/tofiks",
+
+    "build" : {
+        "path"      : "",
+        "compilers" : ["go"],
+        "cpuflags"  : ["POPCNT"],
+        "systems"   : ["Linux"]
+    },
+
+    "test_presets" : {
+
+        "default" : {
+            "base_branch"     : "master",
+            "book_name"       : "UHO_Lichess_4852_v1.epd",
+            "test_bounds"     : "[0.00, 3.00]",
+            "test_confidence" : "[0.05, 0.05]",
+            "win_adj"         : "movecount=3 score=400",
+            "draw_adj"        : "movenumber=40 movecount=8 score=10"
+        },
+
+        "STC" : {
+            "both_options"      : "Hash=8",
+            "both_time_control" : "10.0+0.1",
+            "workload_size"     : 32
+        },
+
+        "LTC" : {
+            "both_options"      : "Hash=64",
+            "both_time_control" : "60.0+0.6",
+            "workload_size"     : 8
+        }
+    }
+}
