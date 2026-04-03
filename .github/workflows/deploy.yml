@@ -23,24 +23,20 @@ jobs:
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          TARGET: ${{ github.event.client_payload.target || github.event.inputs.target || 'all' }}
+          LICHESS_TOKEN: ${{ secrets.LICHESS_TOKEN }}
+          OPENBENCH_ADMIN_USER: ${{ secrets.OPENBENCH_ADMIN_USER }}
+          OPENBENCH_ADMIN_PASS: ${{ secrets.OPENBENCH_ADMIN_PASS }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script_stop: true
+          envs: TARGET,LICHESS_TOKEN,OPENBENCH_ADMIN_USER,OPENBENCH_ADMIN_PASS
           script: |
             cd /opt/tofiks-infra
             git pull --recurse-submodules
-            cat > .env <<EOF
-            LICHESS_TOKEN=${{ secrets.LICHESS_TOKEN }}
-            OPENBENCH_ADMIN_USER=${{ secrets.OPENBENCH_ADMIN_USER }}
-            OPENBENCH_ADMIN_PASS=${{ secrets.OPENBENCH_ADMIN_PASS }}
-            EOF
-
-            TARGET="${{ github.event.client_payload.target || github.event.inputs.target || 'all' }}"
-            case "$TARGET" in
-              bot)   docker compose up -d --build lichess-bot ;;
-              bench) docker compose up -d --build openbench caddy ;;
-              all)   docker compose up -d --build ;;
-            esac
+            printf "LICHESS_TOKEN=%s\nOPENBENCH_ADMIN_USER=%s\nOPENBENCH_ADMIN_PASS=%s\n" "$LICHESS_TOKEN" "$OPENBENCH_ADMIN_USER" "$OPENBENCH_ADMIN_PASS" > .env
+            if [ "$TARGET" = "bot" ]; then docker compose up -d --build lichess-bot; elif [ "$TARGET" = "bench" ]; then docker compose up -d --build openbench caddy; else docker compose up -d --build; fi
             docker image prune -f
