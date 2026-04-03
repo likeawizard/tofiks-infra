@@ -1,6 +1,6 @@
 ## Context
 
-The Hetzner server (188.34.201.182) currently runs lichess-bot as a systemd service with tofiks built from source using Go installed directly on the host. Deployment is via a daily cron GitHub Action that SSHs in, `git pull`s, builds, copies the binary, and restarts the service. This setup has caused friction with Go version management and systemd config maintenance.
+The Hetzner server currently runs lichess-bot as a systemd service with tofiks built from source using Go installed directly on the host. Deployment is via a daily cron GitHub Action that SSHs in, `git pull`s, builds, copies the binary, and restarts the service. This setup has caused friction with Go version management and systemd config maintenance.
 
 The tofiks-infra repo is a new repo intended to own all deployment configuration.
 

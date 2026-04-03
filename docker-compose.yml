@@ -6,3 +6,32 @@ services:
     environment:
       - LICHESS_TOKEN=${LICHESS_TOKEN}
       - PYTHONUNBUFFERED=1
+
+  openbench:
+    build:
+      context: .
+      dockerfile: Dockerfile.openbench
+    container_name: openbench
+    restart: unless-stopped
+    environment:
+      - OPENBENCH_ADMIN_USER=${OPENBENCH_ADMIN_USER}
+      - OPENBENCH_ADMIN_PASS=${OPENBENCH_ADMIN_PASS}
+    volumes:
+      - openbench-data:/app/db
+
+  caddy:
+    image: caddy:2
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  openbench-data:
+  caddy-data:
+  caddy-config:

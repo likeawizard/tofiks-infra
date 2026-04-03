@@ -5,7 +5,7 @@ We already have a working Docker-based deploy pipeline for lichess-bot on Hetzne
 ## Goals / Non-Goals
 
 **Goals:**
-- OpenBench web UI accessible at `http://188.34.201.182`
+- OpenBench web UI accessible at the server's public IP
 - Database persisted across container restarts via Docker volume
 - Admin user created automatically on first deploy
 - Deploys alongside lichess-bot with the existing pipeline
