@@ -5,7 +5,7 @@
 
     "build" : {
         "path"      : "",
-        "compilers" : ["go"],
+        "compilers" : ["gcc"],
         "cpuflags"  : ["POPCNT"],
         "systems"   : ["Linux"]
     },
