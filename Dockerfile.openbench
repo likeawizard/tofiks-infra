@@ -9,6 +9,13 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 # Copy OpenBench source
 COPY OpenBench/ .
 
+# Apply local settings overrides (CSRF, proxy headers)
+COPY openbench-settings.py /app/openbench-settings.py
+RUN cat /app/openbench-settings.py >> /app/OpenSite/settings.py
+
+# Copy custom engine config
+COPY openbench-config/ /app/openbench-config/
+
 # Entrypoint handles migrations + admin creation
 COPY openbench-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
