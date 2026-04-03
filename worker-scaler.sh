@@ -26,7 +26,7 @@ scale_worker() {
         return
     fi
     echo "$(date): Scaling server-worker to $THREADS threads"
-    SERVER_WORKER_THREADS=$THREADS docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --no-deps server-worker
+    SERVER_WORKER_THREADS=$THREADS docker compose -p tofiks-infra -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --no-deps server-worker
     CURRENT_THREADS=$THREADS
     echo "$(date): Server-worker now running with $THREADS threads"
 }
