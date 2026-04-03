@@ -1,0 +1,26 @@
+name: Deploy
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  repository_dispatch:
+    types: [deploy]
+
+jobs:
+  deploy:
+    name: Deploy to Hetzner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script_stop: true
+          script: |
+            cd /opt/tofiks-infra
+            git pull --recurse-submodules
+            echo "LICHESS_TOKEN=${{ secrets.LICHESS_TOKEN }}" > .env
+            docker compose up -d --build
+            docker image prune -f
