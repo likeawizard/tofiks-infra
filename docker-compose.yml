@@ -1,0 +1,8 @@
+services:
+  lichess-bot:
+    build: .
+    container_name: lichess-bot
+    restart: unless-stopped
+    environment:
+      - LICHESS_TOKEN=${LICHESS_TOKEN}
+      - PYTHONUNBUFFERED=1
