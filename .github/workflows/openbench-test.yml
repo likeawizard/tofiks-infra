@@ -1,0 +1,82 @@
+name: OpenBench Test
+on:
+  repository_dispatch:
+    types: [openbench-test]
+
+jobs:
+  create-test:
+    name: Create OpenBench test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+
+      - name: Checkout tofiks
+        uses: actions/checkout@v4
+        with:
+          repository: likeawizard/tofiks
+          ref: ${{ github.event.client_payload.pr_branch }}
+          path: tofiks
+
+      - name: Build and bench dev branch
+        id: dev
+        run: |
+          cd tofiks
+          make
+          BENCH=$(./tofiks bench 2>&1 | grep -oP '^\d+(?= nodes)')
+          echo "bench=$BENCH" >> "$GITHUB_OUTPUT"
+          echo "Dev bench: $BENCH"
+
+      - name: Build and bench master
+        id: base
+        run: |
+          cd tofiks
+          git fetch origin master
+          git checkout master
+          make clean
+          make
+          BENCH=$(./tofiks bench 2>&1 | grep -oP '^\d+(?= nodes)')
+          echo "bench=$BENCH" >> "$GITHUB_OUTPUT"
+          echo "Base bench: $BENCH"
+
+      - name: Create OpenBench test
+        id: test
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST https://bench.likeawizard.dev/scripts/ \
+            -d "username=${{ secrets.OPENBENCH_ADMIN_USER }}" \
+            -d "password=${{ secrets.OPENBENCH_ADMIN_PASS }}" \
+            -d "action=CREATE_TEST" \
+            -d "engine=Tofiks" \
+            -d "dev_repo=https://github.com/likeawizard/tofiks" \
+            -d "dev_branch=${{ github.event.client_payload.pr_branch }}" \
+            -d "dev_bench=${{ steps.dev.outputs.bench }}" \
+            -d "base_repo=https://github.com/likeawizard/tofiks" \
+            -d "base_branch=master" \
+            -d "base_bench=${{ steps.base.outputs.bench }}" \
+            -d "both_options=Threads=1 Hash=8" \
+            -d "both_time_control=10.0+0.1" \
+            -d "book_name=UHO_Lichess_4852_v1.epd" \
+            -d "test_bounds=[0.00, 3.00]" \
+            -d "test_confidence=[0.05, 0.05]" \
+            -d "workload_size=32" \
+            -d "priority=0" \
+            -d "throughput=100" \
+            -d "upload_pgns=FALSE" \
+            -d "win_adj=movecount=3 score=400" \
+            -d "draw_adj=movenumber=40 movecount=8 score=10")
+          echo "Response: $RESPONSE"
+
+      - name: Comment on PR
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.INFRA_DISPATCH_PAT }}
+          repository: likeawizard/tofiks
+          issue-number: ${{ github.event.client_payload.pr_number }}
+          body: |
+            **OpenBench test created** for `${{ github.event.client_payload.pr_branch }}` vs `master`
+
+            - Dev bench: `${{ steps.dev.outputs.bench }}`
+            - Base bench: `${{ steps.base.outputs.bench }}`
+            - View results: https://bench.likeawizard.dev
