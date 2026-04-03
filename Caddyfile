@@ -1,0 +1,3 @@
+bench.likeawizard.dev {
+	reverse_proxy openbench:8000
+}

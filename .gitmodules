@@ -1,3 +1,6 @@
 [submodule "lichess-bot"]
 	path = lichess-bot
 	url = https://github.com/lichess-bot-devs/lichess-bot.git
+[submodule "OpenBench"]
+	path = OpenBench
+	url = https://github.com/AndyGrant/OpenBench.git
