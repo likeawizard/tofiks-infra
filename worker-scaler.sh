@@ -34,14 +34,15 @@ scale_worker() {
 echo "$(date): Worker scaler started (debounce=${DEBOUNCE}s, poll=${POLL}s)"
 sleep 20
 
-# Detect initial state
+# Force initial scale based on current state
 GAMES=$(get_game_count)
+echo "$(date): Initial game count: $GAMES"
 if [ "$GAMES" -gt 0 ]; then
     LAST_STATE="active"
-    CURRENT_THREADS=1
+    scale_worker 1
 else
     LAST_STATE="idle"
-    CURRENT_THREADS=2
+    scale_worker 2
 fi
 STABLE_COUNT=$DEBOUNCE
 
@@ -66,6 +67,11 @@ while true; do
     if [ "$STABLE_COUNT" -ge "$DEBOUNCE" ] && [ "$CURRENT_THREADS" != "$WANT" ]; then
         scale_worker "$WANT"
         STABLE_COUNT=0
+    fi
+
+    # Periodic heartbeat every ~5 minutes
+    if [ $((STABLE_COUNT % 300)) -eq 0 ] && [ "$STABLE_COUNT" -gt 0 ]; then
+        echo "$(date): Heartbeat - games=$GAMES threads=$CURRENT_THREADS"
     fi
 
     sleep "$POLL"
