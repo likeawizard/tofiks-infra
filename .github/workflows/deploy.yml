@@ -38,5 +38,5 @@ jobs:
             cd /opt/tofiks-infra
             git pull --recurse-submodules
             printf "LICHESS_TOKEN=%s\nOPENBENCH_ADMIN_USER=%s\nOPENBENCH_ADMIN_PASS=%s\n" "$LICHESS_TOKEN" "$OPENBENCH_ADMIN_USER" "$OPENBENCH_ADMIN_PASS" > .env
-            if [ "$TARGET" = "bot" ]; then docker compose up -d --build lichess-bot; elif [ "$TARGET" = "bench" ]; then docker compose up -d --build openbench caddy; else docker compose up -d --build; fi
+            if [ "$TARGET" = "bot" ]; then docker compose up -d --build lichess-bot; elif [ "$TARGET" = "bench" ]; then docker compose up -d --build openbench caddy server-worker worker-scaler; else docker compose up -d --build; fi
             docker image prune -f
