@@ -31,6 +31,31 @@ services:
       - caddy-data:/data
       - caddy-config:/config
 
+  server-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: openbench-server-worker
+    restart: unless-stopped
+    environment:
+      - OPENBENCH_USERNAME=${OPENBENCH_ADMIN_USER}
+      - OPENBENCH_PASSWORD=${OPENBENCH_ADMIN_PASS}
+      - OPENBENCH_SERVER=https://bench.likeawizard.dev
+      - PYTHONUNBUFFERED=1
+    command: ["-T", "${SERVER_WORKER_THREADS:-2}", "-N", "1"]
+
+  worker-scaler:
+    image: docker:cli
+    container_name: worker-scaler
+    restart: unless-stopped
+    depends_on:
+      - server-worker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./worker-scaler.sh:/worker-scaler.sh:ro
+      - /opt/tofiks-infra:/compose:ro
+    entrypoint: ["/bin/sh", "/worker-scaler.sh"]
+
   worker:
     build:
       context: .
