@@ -50,6 +50,6 @@ write_files:
     permissions: "0755"
 
 runcmd:
-  - git clone https://github.com/likeawizard/tofiks-infra.git /opt/worker/tofiks-infra
+  - git clone --recurse-submodules https://github.com/likeawizard/tofiks-infra.git /opt/worker/tofiks-infra
   - cp /opt/worker/.env /opt/worker/tofiks-infra/.env
   - /opt/worker/run.sh
