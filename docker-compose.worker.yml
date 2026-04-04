@@ -1,0 +1,12 @@
+services:
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: openbench-worker
+    environment:
+      - OPENBENCH_USERNAME=${OPENBENCH_USERNAME}
+      - OPENBENCH_PASSWORD=${OPENBENCH_PASSWORD}
+      - OPENBENCH_SERVER=${OPENBENCH_SERVER:-https://bench.likeawizard.dev}
+      - PYTHONUNBUFFERED=1
+    command: ["-T", "${WORKER_THREADS:-auto}", "-N", "1", "--fleet"]
