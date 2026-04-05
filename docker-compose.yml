@@ -59,6 +59,28 @@ services:
     profiles:
       - worker
 
+  worker-manager:
+    build:
+      context: ./worker-manager
+    container_name: worker-manager
+    restart: unless-stopped
+    environment:
+      - HCLOUD_TOKEN=${HCLOUD_TOKEN}
+      - HCLOUD_SERVER_TYPE=${HCLOUD_SERVER_TYPE:-cpx32}
+      - HCLOUD_WORKER_COUNT=${HCLOUD_WORKER_COUNT:-1}
+      - HCLOUD_LOCATION=${HCLOUD_LOCATION:-fsn1}
+      - HCLOUD_SSH_KEY=${HCLOUD_SSH_KEY:-}
+      - POLL_INTERVAL=${POLL_INTERVAL:-60s}
+      - COOLDOWN=${COOLDOWN:-5m}
+      - OPENBENCH_URL=http://openbench:8000
+      - OPENBENCH_USERNAME=${OPENBENCH_WORKER_USER}
+      - OPENBENCH_PASSWORD=${OPENBENCH_WORKER_PASS}
+      - CLOUD_CONFIG_PATH=/config/worker-cloud-config.yml
+    volumes:
+      - ./worker-cloud-config.yml:/config/worker-cloud-config.yml:ro
+    profiles:
+      - worker-manager
+
 volumes:
   openbench-data:
   caddy-data:
