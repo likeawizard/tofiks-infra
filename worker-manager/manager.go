@@ -97,6 +97,11 @@ func (m *Manager) tick(ctx context.Context) {
 			log.Printf("No active tests, starting cooldown (%s)", m.config.Cooldown)
 			m.cooldownFrom = time.Now()
 			m.state = stateCoolingDown
+		} else {
+			// Top up if we have fewer workers than desired
+			if err := m.hcloud.CreateWorkers(ctx); err != nil {
+				log.Printf("Error topping up workers: %v", err)
+			}
 		}
 
 	case stateCoolingDown:
