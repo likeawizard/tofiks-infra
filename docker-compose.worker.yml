@@ -9,4 +9,5 @@ services:
       - OPENBENCH_PASSWORD=${OPENBENCH_PASSWORD}
       - OPENBENCH_SERVER=${OPENBENCH_SERVER:-https://bench.likeawizard.dev}
       - PYTHONUNBUFFERED=1
-    command: ["-T", "${WORKER_THREADS:-auto}", "-N", "1", "--fleet"]
+    command: ["-T", "${WORKER_THREADS:-auto}", "-N", "1"]
+    restart: unless-stopped

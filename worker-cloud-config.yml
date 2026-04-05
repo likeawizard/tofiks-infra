@@ -18,10 +18,9 @@
 #   4. The server will automatically:
 #      - Clone the repo and build the worker Docker image (~2-3 min)
 #      - Connect to OpenBench and start running tests
-#      - Shut down when there's no more work (--fleet mode)
 #
-#   5. IMPORTANT: After the server shuts down, DELETE it from the Hetzner panel.
-#      Powered-off servers still incur (reduced) charges for disk storage.
+#   Workers are managed externally (either manually via Hetzner panel,
+#   or automatically by the worker-manager service).
 #
 #   You can create as many servers as you like with this same cloud-config.
 #
@@ -35,21 +34,7 @@ write_files:
       WORKER_THREADS=auto
     permissions: "0600"
 
-  - path: /opt/worker/run.sh
-    content: |
-      #!/bin/bash
-      set -e
-
-      cd /opt/worker/tofiks-infra
-
-      # Build and run the worker (blocks until worker exits)
-      docker compose -f docker-compose.worker.yml up --build
-
-      # Worker exited (fleet mode: no more work) — shut down the server
-      shutdown -h now
-    permissions: "0755"
-
 runcmd:
   - git clone --recurse-submodules https://github.com/likeawizard/tofiks-infra.git /opt/worker/tofiks-infra
   - cp /opt/worker/.env /opt/worker/tofiks-infra/.env
-  - /opt/worker/run.sh
+  - cd /opt/worker/tofiks-infra && docker compose -f docker-compose.worker.yml up -d --build
