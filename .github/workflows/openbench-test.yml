@@ -45,8 +45,8 @@ jobs:
         id: test
         run: |
           RESPONSE=$(curl -s -D /tmp/headers -X POST https://bench.likeawizard.dev/scripts/ \
-            -d "username=${{ secrets.OPENBENCH_ADMIN_USER }}" \
-            -d "password=${{ secrets.OPENBENCH_ADMIN_PASS }}" \
+            -d "username=${{ secrets.OPENBENCH_CI_USER }}" \
+            -d "password=${{ secrets.OPENBENCH_CI_PASS }}" \
             -d "action=CREATE_TEST" \
             -d "dev_engine=Tofiks" \
             -d "dev_repo=https://github.com/likeawizard/tofiks" \
@@ -70,7 +70,7 @@ jobs:
             -d "workload_size=32" \
             -d "priority=0" \
             -d "throughput=100" \
-            -d "upload_pgns=FALSE" \
+            -d "upload_pgns=TRUE" \
             -d "syzygy_wdl=DISABLED" \
             -d "syzygy_adj=OPTIONAL" \
             -d "win_adj=movecount=3 score=400" \
@@ -80,7 +80,9 @@ jobs:
           LOCATION=$(grep -i "^location:" /tmp/headers | tr -d '\r' | awk '{print $2}')
           echo "Redirect: $LOCATION"
           if echo "$LOCATION" | grep -q "/index/"; then
-            echo "Test created successfully"
+            TEST_ID=$(echo "$LOCATION" | grep -oP '/index/\K\d+')
+            echo "test_id=$TEST_ID" >> "$GITHUB_OUTPUT"
+            echo "Test created successfully (ID: $TEST_ID)"
           else
             echo "::error::OpenBench test creation failed. Redirected to: $LOCATION"
             exit 1
@@ -97,4 +99,6 @@ jobs:
 
             - Dev bench: `${{ steps.dev.outputs.bench }}`
             - Base bench: `${{ steps.base.outputs.bench }}`
-            - View results: https://bench.likeawizard.dev
+            - View results: https://bench.likeawizard.dev/test/${{ steps.test.outputs.test_id }}/
+
+            > Test requires approval before workers will pick it up.
