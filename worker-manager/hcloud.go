@@ -71,9 +71,13 @@ func (m *HCloudManager) CreateWorkers(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if len(existing) > 0 {
-		log.Printf("Workers already running (%d servers), skipping creation", len(existing))
+	needed := m.config.WorkerCount - len(existing)
+	if needed <= 0 {
+		log.Printf("Workers already running (%d/%d servers)", len(existing), m.config.WorkerCount)
 		return nil
+	}
+	if len(existing) > 0 {
+		log.Printf("Have %d/%d workers, creating %d more", len(existing), m.config.WorkerCount, needed)
 	}
 
 	image, _, err := m.client.Image.GetByNameAndArchitecture(ctx, "docker-ce", "x86")
@@ -101,7 +105,7 @@ func (m *HCloudManager) CreateWorkers(ctx context.Context) error {
 	}
 
 	batch := time.Now().Format("0102-1504")
-	for i := range m.config.WorkerCount {
+	for i := range needed {
 		name := fmt.Sprintf("ob-worker-%s-%d", batch, i+1)
 
 		opts := hcloud.ServerCreateOpts{
