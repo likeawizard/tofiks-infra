@@ -79,14 +79,14 @@ jobs:
             -d "scale_nps=1000000")
           LOCATION=$(grep -i "^location:" /tmp/headers | tr -d '\r' | awk '{print $2}')
           echo "Redirect: $LOCATION"
-          if echo "$LOCATION" | grep -q "/index/"; then
-            TEST_ID=$(echo "$LOCATION" | grep -oP '/index/\K\d+')
-            echo "test_id=$TEST_ID" >> "$GITHUB_OUTPUT"
-            echo "Test created successfully (ID: $TEST_ID)"
-          else
+          if ! echo "$LOCATION" | grep -q "/index/"; then
             echo "::error::OpenBench test creation failed. Redirected to: $LOCATION"
             exit 1
           fi
+          COOKIE=$(grep -i "^set-cookie: sessionid=" /tmp/headers | tr -d '\r' | grep -oP 'sessionid=\S+?;')
+          TEST_ID=$(curl -s -b "$COOKIE" https://bench.likeawizard.dev/index/ | grep -oP '/test/\d+/' | head -1 | grep -oP '\d+')
+          echo "test_id=$TEST_ID" >> "$GITHUB_OUTPUT"
+          echo "Test created successfully (ID: $TEST_ID)"
 
       - name: Comment on PR
         uses: peter-evans/create-or-update-comment@v4
