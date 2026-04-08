@@ -96,7 +96,7 @@ jobs:
             exit 1
           fi
           COOKIE=$(grep -i "^set-cookie: sessionid=" /tmp/headers | tr -d '\r' | grep -oP 'sessionid=\S+?;')
-          TUNE_ID=$(curl -s -b "$COOKIE" https://bench.likeawizard.dev/index/ | grep -oP '/test/\d+/' | head -1 | grep -oP '\d+')
+          TUNE_ID=$(curl -s -b "$COOKIE" https://bench.likeawizard.dev/index/ | grep -oP '/tune/\d+/' | head -1 | grep -oP '\d+')
           echo "tune_id=$TUNE_ID" >> "$GITHUB_OUTPUT"
           echo "Tune created successfully (ID: $TUNE_ID)"
 
@@ -113,6 +113,6 @@ jobs:
             - Parameters: ${{ steps.spsa.outputs.param_count }}
             - Iterations: ${{ steps.spsa.outputs.spsa_iterations }}
             - Pairs per: ${{ steps.spsa.outputs.spsa_pairs_per }}
-            - View results: https://bench.likeawizard.dev/test/${{ steps.tune.outputs.tune_id }}/
+            - View results: https://bench.likeawizard.dev/tune/${{ steps.tune.outputs.tune_id }}/
 
             > Tune requires approval before workers will pick it up.
