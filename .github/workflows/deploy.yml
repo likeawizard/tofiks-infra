@@ -29,6 +29,7 @@ jobs:
           OPENBENCH_ADMIN_USER: ${{ secrets.OPENBENCH_ADMIN_USER }}
           OPENBENCH_ADMIN_PASS: ${{ secrets.OPENBENCH_ADMIN_PASS }}
           HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
+          HCLOUD_SSH_KEY: ${{ secrets.HCLOUD_SSH_KEY }}
           OPENBENCH_WORKER_USER: ${{ secrets.OPENBENCH_WORKER_USER }}
           OPENBENCH_WORKER_PASS: ${{ secrets.OPENBENCH_WORKER_PASS }}
         with:
