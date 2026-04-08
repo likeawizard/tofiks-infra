@@ -3,4 +3,4 @@
 	url = https://github.com/lichess-bot-devs/lichess-bot.git
 [submodule "OpenBench"]
 	path = OpenBench
-	url = https://github.com/AndyGrant/OpenBench.git
+	url = git@github.com:likeawizard/OpenBench.git

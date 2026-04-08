@@ -36,10 +36,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script_stop: true
-          envs: TARGET,LICHESS_TOKEN,OPENBENCH_ADMIN_USER,OPENBENCH_ADMIN_PASS,HCLOUD_TOKEN,OPENBENCH_WORKER_USER,OPENBENCH_WORKER_PASS
+          envs: TARGET,LICHESS_TOKEN,OPENBENCH_ADMIN_USER,OPENBENCH_ADMIN_PASS,HCLOUD_TOKEN,HCLOUD_SSH_KEY,OPENBENCH_WORKER_USER,OPENBENCH_WORKER_PASS
           script: |
             cd /opt/tofiks-infra
             git pull --recurse-submodules
-            printf '%s\n' "LICHESS_TOKEN=$LICHESS_TOKEN" "OPENBENCH_ADMIN_USER=$OPENBENCH_ADMIN_USER" "OPENBENCH_ADMIN_PASS=$OPENBENCH_ADMIN_PASS" "WORKER_THREADS=6" "HCLOUD_TOKEN=$HCLOUD_TOKEN" "HCLOUD_SERVER_TYPE=cpx32" "HCLOUD_WORKER_COUNT=8" "HCLOUD_SSH_KEY=" "OPENBENCH_WORKER_USER=$OPENBENCH_WORKER_USER" "OPENBENCH_WORKER_PASS=$OPENBENCH_WORKER_PASS" > .env
-            if [ "$TARGET" = "bot" ]; then docker compose --profile worker-manager up -d --build lichess-bot worker-manager; elif [ "$TARGET" = "bench" ]; then docker compose --profile worker-manager up -d --build openbench caddy server-worker worker-manager; else docker compose --profile worker-manager up -d --build; fi
+            printf '%s\n' "LICHESS_TOKEN=$LICHESS_TOKEN" "OPENBENCH_ADMIN_USER=$OPENBENCH_ADMIN_USER" "OPENBENCH_ADMIN_PASS=$OPENBENCH_ADMIN_PASS" "WORKER_THREADS=6" "HCLOUD_TOKEN=$HCLOUD_TOKEN" "HCLOUD_SERVER_TYPE=cpx32" "HCLOUD_WORKER_COUNT=8" "HCLOUD_SSH_KEY=$HCLOUD_SSH_KEY" "OPENBENCH_WORKER_USER=$OPENBENCH_WORKER_USER" "OPENBENCH_WORKER_PASS=$OPENBENCH_WORKER_PASS" > .env
+            if [ "$TARGET" = "bot" ]; then docker compose --profile worker-manager up -d --build lichess-bot worker-manager; elif [ "$TARGET" = "bench" ]; then docker compose --profile worker-manager up -d --build openbench caddy worker-manager; else docker compose --profile worker-manager up -d --build; fi
             docker image prune -f

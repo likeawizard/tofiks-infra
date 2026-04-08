@@ -4,10 +4,6 @@ set -e
 # Symlink DB to persistent volume
 ln -sf /app/db/db.sqlite3 /app/db.sqlite3
 
-# Apply custom config overlay
-cp /app/openbench-config/config.json /app/Config/config.json
-cp /app/openbench-config/Tofiks.json /app/Engines/Tofiks.json
-
 # Run migrations
 python manage.py migrate --noinput
 
