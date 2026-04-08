@@ -1,0 +1,118 @@
+name: OpenBench SPSA Tune
+on:
+  repository_dispatch:
+    types: [openbench-spsa]
+
+jobs:
+  create-tune:
+    name: Create OpenBench SPSA tune
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+
+      - name: Checkout tofiks
+        uses: actions/checkout@v4
+        with:
+          repository: likeawizard/tofiks
+          ref: ${{ github.event.client_payload.pr_branch }}
+          path: tofiks
+
+      - name: Build and bench
+        id: dev
+        run: |
+          cd tofiks
+          make
+          BENCH=$(./tofiks bench 2>&1 | grep -oP '^\d+(?= nodes)')
+          echo "bench=$BENCH" >> "$GITHUB_OUTPUT"
+          echo "Dev bench: $BENCH"
+
+      - name: Read spsa.json and build inputs
+        id: spsa
+        run: |
+          cd tofiks
+
+          # Build spsa_inputs: "name, type, value, min, max, c_end, r_end" per line
+          SPSA_INPUTS=$(jq -r '.params[] | "\(.name), \(.type), \(.value), \(.min), \(.max), \(.c_end), \(.r_end)"' spsa.json)
+          echo "spsa_inputs<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$SPSA_INPUTS" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+          # Read SPSA hyperparameters
+          echo "spsa_alpha=$(jq -r '.spsa_alpha' spsa.json)" >> "$GITHUB_OUTPUT"
+          echo "spsa_gamma=$(jq -r '.spsa_gamma' spsa.json)" >> "$GITHUB_OUTPUT"
+          echo "spsa_A_ratio=$(jq -r '.spsa_A_ratio' spsa.json)" >> "$GITHUB_OUTPUT"
+          echo "spsa_iterations=$(jq -r '.spsa_iterations' spsa.json)" >> "$GITHUB_OUTPUT"
+          echo "spsa_pairs_per=$(jq -r '.spsa_pairs_per' spsa.json)" >> "$GITHUB_OUTPUT"
+          echo "spsa_reporting_type=$(jq -r '.spsa_reporting_type' spsa.json)" >> "$GITHUB_OUTPUT"
+          echo "spsa_distribution_type=$(jq -r '.spsa_distribution_type' spsa.json)" >> "$GITHUB_OUTPUT"
+
+          PARAM_COUNT=$(jq '.params | length' spsa.json)
+          echo "param_count=$PARAM_COUNT" >> "$GITHUB_OUTPUT"
+
+          echo "=== SPSA Config ==="
+          echo "Params: $PARAM_COUNT"
+          echo "$SPSA_INPUTS"
+
+      - name: Create OpenBench tune
+        id: tune
+        run: |
+          RESPONSE=$(curl -s -D /tmp/headers -X POST https://bench.likeawizard.dev/scripts/ \
+            -d "username=${{ secrets.OPENBENCH_CI_USER }}" \
+            -d "password=${{ secrets.OPENBENCH_CI_PASS }}" \
+            -d "action=CREATE_TUNE" \
+            -d "dev_engine=Tofiks" \
+            -d "dev_repo=https://github.com/likeawizard/tofiks" \
+            -d "dev_branch=${{ github.event.client_payload.pr_branch }}" \
+            -d "dev_bench=${{ steps.dev.outputs.bench }}" \
+            -d "dev_options=Threads=1 Hash=8" \
+            -d "dev_time_control=10.0+0.1" \
+            -d "dev_network=" \
+            -d "book_name=UHO_Lichess_4852_v1.epd" \
+            -d "upload_pgns=FALSE" \
+            -d "priority=0" \
+            -d "throughput=100" \
+            -d "syzygy_wdl=DISABLED" \
+            -d "syzygy_adj=OPTIONAL" \
+            -d "win_adj=movecount=3 score=400" \
+            -d "draw_adj=movenumber=40 movecount=8 score=10" \
+            -d "scale_method=DEV" \
+            -d "scale_nps=1000000" \
+            --data-urlencode "spsa_inputs=${{ steps.spsa.outputs.spsa_inputs }}" \
+            -d "spsa_alpha=${{ steps.spsa.outputs.spsa_alpha }}" \
+            -d "spsa_gamma=${{ steps.spsa.outputs.spsa_gamma }}" \
+            -d "spsa_A_ratio=${{ steps.spsa.outputs.spsa_A_ratio }}" \
+            -d "spsa_iterations=${{ steps.spsa.outputs.spsa_iterations }}" \
+            -d "spsa_pairs_per=${{ steps.spsa.outputs.spsa_pairs_per }}" \
+            -d "spsa_reporting_type=${{ steps.spsa.outputs.spsa_reporting_type }}" \
+            -d "spsa_distribution_type=${{ steps.spsa.outputs.spsa_distribution_type }}")
+          LOCATION=$(grep -i "^location:" /tmp/headers | tr -d '\r' | awk '{print $2}')
+          echo "Redirect: $LOCATION"
+          if ! echo "$LOCATION" | grep -q "/index/"; then
+            echo "::error::OpenBench tune creation failed. Redirected to: $LOCATION"
+            echo "$RESPONSE"
+            exit 1
+          fi
+          COOKIE=$(grep -i "^set-cookie: sessionid=" /tmp/headers | tr -d '\r' | grep -oP 'sessionid=\S+?;')
+          TUNE_ID=$(curl -s -b "$COOKIE" https://bench.likeawizard.dev/index/ | grep -oP '/test/\d+/' | head -1 | grep -oP '\d+')
+          echo "tune_id=$TUNE_ID" >> "$GITHUB_OUTPUT"
+          echo "Tune created successfully (ID: $TUNE_ID)"
+
+      - name: Comment on PR
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.INFRA_DISPATCH_PAT }}
+          repository: likeawizard/tofiks
+          issue-number: ${{ github.event.client_payload.pr_number }}
+          body: |
+            **OpenBench SPSA tune created** for `${{ github.event.client_payload.pr_branch }}`
+
+            - Bench: `${{ steps.dev.outputs.bench }}`
+            - Parameters: ${{ steps.spsa.outputs.param_count }}
+            - Iterations: ${{ steps.spsa.outputs.spsa_iterations }}
+            - Pairs per: ${{ steps.spsa.outputs.spsa_pairs_per }}
+            - View results: https://bench.likeawizard.dev/test/${{ steps.tune.outputs.tune_id }}/
+
+            > Tune requires approval before workers will pick it up.
