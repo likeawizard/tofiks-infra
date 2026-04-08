@@ -52,6 +52,6 @@ func detectActiveTests(html string) bool {
 		}
 	}
 
-	// Active tests have links to /test/ pages
-	return strings.Contains(rest, "/test/")
+	// Active workloads have links to /test/ or /tune/ pages
+	return strings.Contains(rest, "/test/") || strings.Contains(rest, "/tune/")
 }
