@@ -7,6 +7,16 @@ ln -sf /app/db/db.sqlite3 /app/db.sqlite3
 # Run migrations
 python manage.py migrate --noinput
 
+# Enable WAL journal mode so concurrent workers don't pile up on
+# "database is locked" during clientSubmitResults. journal_mode is a
+# persistent, file-level setting — once set it sticks across reopens.
+python -c "
+import sqlite3
+c = sqlite3.connect('/app/db.sqlite3')
+print('journal_mode =', c.execute('PRAGMA journal_mode=WAL').fetchone()[0])
+c.close()
+"
+
 # Create admin user if it doesn't exist
 if [ -n "$OPENBENCH_ADMIN_USER" ] && [ -n "$OPENBENCH_ADMIN_PASS" ]; then
   python manage.py shell <<PYEOF

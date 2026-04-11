@@ -25,6 +25,12 @@ We maintain a fork of `AndyGrant/OpenBench` with Tofiks-specific customizations 
 ### Hcloud workers: no recovery from failed cloud-init
 If workers fail during boot (e.g., bad submodule URL, missing credentials), they won't self-heal. They must be manually deleted from Hetzner so the worker-manager creates fresh ones.
 
+### OpenBench: persistent state lives in TWO places
+The openbench container needs **both** `/app/db` (SQLite) and `/app/Media` (PGN tar archives, event logs) mounted as volumes. The DB alone is not enough — PGN downloads read from `/app/Media/PGNs/<id>.pgn.tar` and those files get wiped on every container rebuild if `/app/Media` is ephemeral. If you see "Unable to find PGN for Workload #N" for every historical test after a deploy, this is the cause.
+
+### OpenBench SQLite must be in WAL mode
+With multiple concurrent workers hammering `/clientSubmitResults/`, the default `journal_mode=delete` serializes every transaction and produces `sqlite3.OperationalError: database is locked` → 500 errors. The openbench entrypoint runs `PRAGMA journal_mode=WAL` once at startup; the setting is persistent on the DB file. If you restore the DB from a backup or swap in a fresh SQLite file, re-run the PRAGMA.
+
 ## OpenSpec Workflow
 
 When working with OpenSpec changes, follow this git workflow automatically:
