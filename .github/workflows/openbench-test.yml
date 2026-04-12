@@ -70,7 +70,7 @@ jobs:
             -d "workload_size=32" \
             -d "priority=0" \
             -d "throughput=100" \
-            -d "upload_pgns=TRUE" \
+            -d "upload_pgns=VERBOSE" \
             -d "syzygy_wdl=DISABLED" \
             -d "syzygy_adj=OPTIONAL" \
             -d "win_adj=movecount=3 score=400" \

@@ -71,7 +71,7 @@ jobs:
             -d "dev_time_control=10.0+0.1" \
             -d "dev_network=" \
             -d "book_name=UHO_Lichess_4852_v1.epd" \
-            -d "upload_pgns=FALSE" \
+            -d "upload_pgns=VERBOSE" \
             -d "priority=0" \
             -d "throughput=100" \
             -d "syzygy_wdl=DISABLED" \
