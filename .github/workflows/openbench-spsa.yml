@@ -67,7 +67,7 @@ jobs:
             -d "dev_repo=https://github.com/likeawizard/tofiks" \
             -d "dev_branch=${{ github.event.client_payload.pr_branch }}" \
             -d "dev_bench=${{ steps.dev.outputs.bench }}" \
-            -d "dev_options=Threads=1 Hash=8" \
+            -d "dev_options=Threads=1 Hash=64" \
             -d "dev_time_control=10.0+0.1" \
             -d "dev_network=" \
             -d "book_name=UHO_Lichess_4852_v1.epd" \
